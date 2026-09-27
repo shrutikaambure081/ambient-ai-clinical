@@ -1,0 +1,40 @@
+version: "3.9"
+
+services:
+  db:
+    image: ankane/pgvector:latest
+    container_name: ambient_ai_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ambient_user
+      POSTGRES_PASSWORD: ambient_pass
+      POSTGRES_DB: ambient_ai
+    ports:
+      - "5432:5432"
+    volumes:
+      - ambient_ai_pgdata:/var/lib/postgresql/data
+      - ./backend/init_extensions.sql:/docker-entrypoint-initdb.d/init_extensions.sql
+
+  backend:
+    build: ./backend
+    container_name: ambient_ai_backend
+    restart: unless-stopped
+    depends_on:
+      - db
+    env_file:
+      - ./backend/.env
+    ports:
+      - "8000:8000"
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ambient_ai_ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+
+volumes:
+  ambient_ai_pgdata:
+  ollama_data:
